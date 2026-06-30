@@ -1,0 +1,22 @@
+{
+  "agentGraphRequest": {
+    "agents": [
+      {
+        "id": { "name": "echo-agent", "version": "0.1.0", "registrySourceId": { "type": "local" } },
+        "name": "echo-agent",
+        "provider": { "type": "local", "runtime": "docker" },
+        "proxies": {},
+        "options": {}
+      },
+      {
+        "id": { "name": "user-proxy", "version": "0.1.0", "registrySourceId": { "type": "local" } },
+        "name": "user-proxy",
+        "provider": { "type": "local", "runtime": "docker" },
+        "proxies": {},
+        "options": {}
+      }
+    ]
+  },
+  "namespaceProvider": { "type": "create_if_not_exists", "namespaceRequest": { "name": "default" } },
+  "execution": { "mode": "immediate" }
+}

@@ -1,0 +1,53 @@
+# Agent marketplace on CoralOS — single track, stock coral-server.
+#
+#   bash build-agents.sh                                 # build images (no bash? `npm run dev` / `just build` build them for you)
+#   docker compose up -d coral                           # start coral-server (MCP coordinator)
+#   cd examples/marketplace && npm install && npm start  # launch the market session
+#
+# coral-server is a PURE MCP coordinator (wallet-free config). It launches the buyer + the seller
+# personas as containers per session, via the Docker socket. Settlement is the Solana escrow contract
+# (agent-side) — coral-server never holds a keypair.
+#
+# Per-agent options (wallets, persona, LLM keys) are sent by examples/marketplace/start.ts in the
+# session request. The env below is forwarded to the agents coral launches.
+
+services:
+
+  # ── CoralOS — MCP bus that launches the agents per session ──────────────────
+  coral:
+    # Pinned by digest for reproducibility — this is what `:latest` resolved to on 2026-06-27.
+    # Bump: docker pull ghcr.io/coral-protocol/coral-server:latest
+    #       docker inspect --format '{{index .RepoDigests 0}}' ghcr.io/coral-protocol/coral-server:latest
+    #       (browse tags: https://github.com/coral-protocol/coral-server/pkgs/container/coral-server)
+    image: ghcr.io/coral-protocol/coral-server:latest@sha256:2acd1701aed63367583b4ff4496d3a4255112f7363b4daae7c3a700acf35c6eb
+    container_name: coral
+    ports:
+      - "5555:5555"
+    environment:
+      - CONFIG_FILE_PATH=/config/coral.toml
+      # Forwarded to the agents coral launches:
+      - SELLER_WALLET=${WALLET}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      - BUYER_KEYPAIR_B58=${BUYER_KEYPAIR_B58}
+      - BUYER_MAX_SOL=${BUYER_MAX_SOL:-0.001}
+      # LLM brain — Anthropic by default; set LLM_PROVIDER=openai + OPENAI_API_KEY to flip the market.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - LLM_MODEL=${LLM_MODEL:-}
+      # Service API keys (the goods sold by deliverService):
+      - HELIUS_API_KEY=${HELIUS_API_KEY}
+      - JUPITER_API_KEY=${JUPITER_API_KEY}
+      - NEWS_API_KEY=${NEWS_API_KEY}
+      # TxODDS World Cup oracle (the `txline` service). Note: the marketplace's start.ts delivers these
+      # per-agent via the session request; this line only matters for the by-hand `docker compose` path.
+      - TXLINE_API_KEY=${TXLINE_API_KEY}
+      - TXLINE_BASE_URL=${TXLINE_BASE_URL:-}
+      - INFERENCE_MODEL=${INFERENCE_MODEL:-}
+      # Set TRACE=1 to log coral_* calls + on-chain Explorer links in the agents.
+      - TRACE=${TRACE:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./examples/agent-economy/config/coral.toml:/config/coral.toml:ro
+      - ./coral-agents:/agents:ro
+    restart: unless-stopped

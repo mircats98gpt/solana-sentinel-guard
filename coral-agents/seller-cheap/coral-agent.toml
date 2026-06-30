@@ -1,0 +1,32 @@
+edition = 4
+
+[agent]
+name = "seller-cheap"
+version = "0.1.0"
+description = "Marketplace seller persona — aggressive discounter. Reuses the seller-agent image; an LLM decides its bids, never below its floor."
+summary = "A low-floor, high-aggression bidder for the agent marketplace."
+readme = "Bids in the shared market thread (WANT -> BID), wins on price, settles via escrow. Same image as seller-agent; the PERSONA/FLOOR_SOL/SERVICES options shape how it competes."
+
+[agent.license]
+type = "spdx"
+expression = "MIT"
+
+[options]
+SELLER_WALLET = { type = "string", description = "Devnet wallet pubkey that receives payments" }
+AGENT_NAME = { type = "string", default = "seller-cheap", description = "Market identity (matches the registry name)" }
+SERVICES = { type = "string", default = "jupiter,coingecko,sentinel", description = "Inventory — comma-separated services this seller bids on" }
+FLOOR_SOL = { type = "f64", default = 0.0002, description = "Cost floor — the LLM may never bid below this" }
+PERSONA = { type = "string", default = "an aggressive discounter who bids low to win volume, but never below the floor", description = "Bidding persona (LLM system prompt)" }
+SERVICE = { type = "string", default = "sentinel", description = "What deliverService returns: jupiter | coingecko | news | inference | sentinel" }
+SOLANA_RPC_URL = { type = "string", default = "", description = "Solana RPC URL (devnet)" }
+ESCROW_DEADLINE_SECS = { type = "f64", default = 600, description = "Refund deadline for escrow deposits (seconds)" }
+ANTHROPIC_API_KEY = { type = "string", default = "", description = "Anthropic key (default brain)" }
+OPENAI_API_KEY = { type = "string", default = "", description = "OpenAI key — set with LLM_PROVIDER=openai to flip the brain" }
+LLM_PROVIDER = { type = "string", default = "", description = "anthropic (default) | openai" }
+LLM_MODEL = { type = "string", default = "", description = "Override the LLM model id" }
+JUPITER_API_KEY = { type = "string", default = "", description = "Jupiter API key" }
+TRACE = { type = "string", default = "", description = "Set to 1 to log CoralOS calls + on-chain steps" }
+
+# Reuses the already-built seller-agent image — no separate build needed.
+[runtimes.docker]
+image = "seller-agent:0.1.0"
